@@ -1,7 +1,8 @@
 from datetime import datetime, timezone
 
-from extensions import db
+from sqlalchemy import Boolean, Column, Date, DateTime, Integer, String
 
+from app.database import Base
 
 VALID_BLOOD_GROUPS = {
     "A+",
@@ -15,62 +16,62 @@ VALID_BLOOD_GROUPS = {
 }
 
 
-class Profile(db.Model):
+class Profile(Base):
     __tablename__ = "profiles"
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
 
-    full_name = db.Column(
-        db.String(120),
+    full_name = Column(
+        String(120),
         nullable=False,
     )
 
-    email = db.Column(
-        db.String(120),
+    email = Column(
+        String(120),
         unique=True,
         nullable=False,
         index=True,
     )
 
-    phone = db.Column(
-        db.String(20),
+    phone = Column(
+        String(20),
         nullable=False,
     )
 
-    blood_group = db.Column(
-        db.String(3),
+    blood_group = Column(
+        String(3),
         nullable=False,
     )
 
-    address = db.Column(
-        db.String(255),
+    address = Column(
+        String(255),
         nullable=False,
     )
 
-    date_of_birth = db.Column(
-        db.Date,
+    date_of_birth = Column(
+        Date,
         nullable=True,
     )
 
-    last_donation_date = db.Column(
-        db.Date,
+    last_donation_date = Column(
+        Date,
         nullable=True,
     )
 
-    is_available = db.Column(
-        db.Boolean,
+    is_available = Column(
+        Boolean,
         nullable=False,
         default=True,
     )
 
-    created_at = db.Column(
-        db.DateTime,
+    created_at = Column(
+        DateTime,
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
     )
 
-    updated_at = db.Column(
-        db.DateTime,
+    updated_at = Column(
+        DateTime,
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),

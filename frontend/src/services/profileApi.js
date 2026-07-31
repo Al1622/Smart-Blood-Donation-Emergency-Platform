@@ -1,4 +1,4 @@
-const API_URL = 'http://127.0.0.1:5000/api/profiles'
+const API_URL = 'http://127.0.0.1:8000/api/profiles'
 
 async function request(url, options = {}) {
   const response = await fetch(url, options)

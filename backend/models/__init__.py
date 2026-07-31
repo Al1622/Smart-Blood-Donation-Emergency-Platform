@@ -1,3 +1,3 @@
-from models.profile import Profile
+from .profile import Base, Profile
 
-__all__ = ["Profile"]
+__all__ = ["Base", "Profile"]

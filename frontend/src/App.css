@@ -102,6 +102,82 @@
   gap: 22px;
 }
 
+.verification-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.verification-badge.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.verification-badge.approved {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.verification-badge.rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.verification-badge.suspended {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.verification-line {
+  margin-top: 8px;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.review-panel {
+  margin: 20px 24px 0;
+  border: 1px solid #e8ecf2;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.review-card {
+  padding: 16px 20px;
+  border-top: 1px solid #edf0f4;
+}
+
+.review-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.review-card p {
+  margin: 0 0 10px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.review-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
 .profile-panel,
 .editor-panel {
   background: white;
@@ -429,7 +505,8 @@ button:disabled {
     grid-column: auto;
   }
 
-  .form-actions {
+  .form-actions,
+  .review-actions {
     flex-direction: column-reverse;
   }
 

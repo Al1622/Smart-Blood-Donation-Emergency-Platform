@@ -9,6 +9,10 @@ class ProfileCreate(BaseModel):
     phone: str
     blood_group: str
     address: str
+    location: Optional[str] = None
+    gender: Optional[str] = None
+    nid_number: Optional[str] = None
+    nid_document_reference: Optional[str] = None
     date_of_birth: Optional[str] = None
     last_donation_date: Optional[str] = None
     is_available: bool = True
@@ -20,6 +24,11 @@ class ProfileUpdate(BaseModel):
     phone: Optional[str] = None
     blood_group: Optional[str] = None
     address: Optional[str] = None
+    location: Optional[str] = None
+    gender: Optional[str] = None
+    nid_number: Optional[str] = None
+    nid_document_reference: Optional[str] = None
     date_of_birth: Optional[str] = None
     last_donation_date: Optional[str] = None
     is_available: Optional[bool] = None
+    verification_status: Optional[str] = None

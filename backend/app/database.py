@@ -21,6 +21,7 @@ Base = declarative_base()
 
 
 def create_tables() -> None:
+    from app.auth import User  # noqa: F401
     from models.profile import Profile  # noqa: F401
 
     Base.metadata.create_all(bind=engine)

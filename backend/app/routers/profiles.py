@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.auth import User, get_current_user, get_optional_current_user, log_audit, require_admin
 from app.database import get_db
 from app.schemas import ProfileCreate, ProfileUpdate
 from models.profile import Profile, VALID_BLOOD_GROUPS
@@ -90,33 +91,72 @@ def normalize_payload(payload):
 
 
 @router.get("")
-def get_all_profiles(db: Session = Depends(get_db)):
+def get_all_profiles(db: Session = Depends(get_db), current_user: User | None = Depends(get_optional_current_user)):
+    if current_user is None:
+        return JSONResponse(
+            status_code=401,
+            content={
+                "success": False,
+                "message": "Authentication required",
+            },
+        )
+
     profiles = db.query(Profile).order_by(Profile.id.desc()).all()
+
+    if current_user.role == "admin":
+        data = [profile.to_dict() for profile in profiles]
+    else:
+        data = [profile.to_public_dict() for profile in profiles]
 
     return {
         "success": True,
         "count": len(profiles),
-        "data": [profile.to_dict() for profile in profiles],
+        "data": data,
     }
 
 
 @router.post("", status_code=201)
-def create_profile(payload: ProfileCreate, db: Session = Depends(get_db)):
+def create_profile(payload: ProfileCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     data = normalize_payload(payload)
     errors = validate_profile(data, creating=True)
 
     if errors:
         return validation_error_response(errors)
 
+    if current_user.role != "admin" and "verification_status" in data:
+        return JSONResponse(
+            status_code=403,
+            content={
+                "success": False,
+                "message": "You cannot set verification status.",
+            },
+        )
+
+    existing_profile = db.query(Profile).filter(Profile.user_id == current_user.id).first()
+    if existing_profile is not None:
+        return JSONResponse(
+            status_code=409,
+            content={
+                "success": False,
+                "message": "You already have a donor profile.",
+            },
+        )
+
     profile = Profile(
+        user_id=current_user.id,
         full_name=str(data["full_name"]).strip(),
         email=str(data["email"]).lower().strip(),
         phone=str(data["phone"]).strip(),
         blood_group=str(data["blood_group"]).upper().strip(),
         address=str(data["address"]).strip(),
+        location=data.get("location"),
+        gender=data.get("gender"),
+        nid_number=data.get("nid_number"),
+        nid_document_reference=data.get("nid_document_reference"),
         date_of_birth=parse_date(data.get("date_of_birth")),
         last_donation_date=parse_date(data.get("last_donation_date")),
         is_available=data.get("is_available", True),
+        verification_status="PENDING",
     )
 
     try:
@@ -133,18 +173,21 @@ def create_profile(payload: ProfileCreate, db: Session = Depends(get_db)):
             },
         )
 
+    log_audit(db, action="PROFILE_CREATED", actor_user_id=current_user.id, target_type="donor_profile", target_id=profile.id, metadata={"status": profile.verification_status})
+    db.commit()
+
     return JSONResponse(
         status_code=201,
         content={
             "success": True,
-            "message": "Profile created successfully.",
-            "data": profile.to_dict(),
+            "message": "Your donor profile has been submitted and is awaiting admin verification.",
+            "data": profile.to_public_dict(),
         },
     )
 
 
 @router.get("/{profile_id}")
-def get_profile(profile_id: int, db: Session = Depends(get_db)):
+def get_profile(profile_id: int, db: Session = Depends(get_db), current_user: User | None = Depends(get_optional_current_user)):
     profile = db.get(Profile, profile_id)
 
     if profile is None:
@@ -156,9 +199,32 @@ def get_profile(profile_id: int, db: Session = Depends(get_db)):
             },
         )
 
+    if current_user is None:
+        return JSONResponse(
+            status_code=401,
+            content={
+                "success": False,
+                "message": "Authentication required",
+            },
+        )
+
+    if current_user.role != "admin" and profile.user_id != current_user.id:
+        return JSONResponse(
+            status_code=403,
+            content={
+                "success": False,
+                "message": "Access denied.",
+            },
+        )
+
+    if current_user.role == "admin" or profile.user_id == current_user.id:
+        payload = profile.to_dict()
+    else:
+        payload = profile.to_public_dict()
+
     return {
         "success": True,
-        "data": profile.to_dict(),
+        "data": payload,
     }
 
 
@@ -168,6 +234,7 @@ def update_profile(
     profile_id: int,
     payload: ProfileUpdate | None = None,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     profile = db.get(Profile, profile_id)
 
@@ -180,11 +247,35 @@ def update_profile(
             },
         )
 
+    if profile.user_id != current_user.id and current_user.role != "admin":
+        return JSONResponse(
+            status_code=403,
+            content={
+                "success": False,
+                "message": "You can only manage your own profile.",
+            },
+        )
+
     data = normalize_payload(payload) if payload else {}
     errors = validate_profile(data)
 
     if errors:
         return validation_error_response(errors)
+
+    if current_user.role != "admin" and "verification_status" in data:
+        return JSONResponse(
+            status_code=403,
+            content={
+                "success": False,
+                "message": "Verification status cannot be changed from the frontend.",
+            },
+        )
+
+    if current_user.role != "admin" and any(field in data for field in ["full_name", "date_of_birth", "nid_number", "nid_document_reference", "address", "location", "gender"]):
+        profile.verification_status = "PENDING"
+        profile.rejection_reason = None
+        profile.verified_by = None
+        profile.verified_at = None
 
     if "full_name" in data:
         profile.full_name = str(data["full_name"]).strip()
@@ -200,6 +291,18 @@ def update_profile(
 
     if "address" in data:
         profile.address = str(data["address"]).strip()
+
+    if "location" in data:
+        profile.location = str(data["location"]).strip() or None
+
+    if "gender" in data:
+        profile.gender = str(data["gender"]).strip() or None
+
+    if "nid_number" in data:
+        profile.nid_number = str(data["nid_number"]).strip() or None
+
+    if "nid_document_reference" in data:
+        profile.nid_document_reference = str(data["nid_document_reference"]).strip() or None
 
     if "date_of_birth" in data:
         profile.date_of_birth = parse_date(data["date_of_birth"])
@@ -223,15 +326,18 @@ def update_profile(
             },
         )
 
+    log_audit(db, action="PROFILE_UPDATED", actor_user_id=current_user.id, target_type="donor_profile", target_id=profile.id, metadata={"updated_by_owner": current_user.role != "admin"})
+    db.commit()
+
     return {
         "success": True,
         "message": "Profile updated successfully.",
-        "data": profile.to_dict(),
+        "data": profile.to_public_dict(),
     }
 
 
 @router.delete("/{profile_id}")
-def delete_profile(profile_id: int, db: Session = Depends(get_db)):
+def delete_profile(profile_id: int, db: Session = Depends(get_db), current_user: User = Depends(require_admin)):
     profile = db.get(Profile, profile_id)
 
     if profile is None:

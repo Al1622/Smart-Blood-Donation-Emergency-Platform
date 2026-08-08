@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { profileApi } from './services/profileApi'
+import { adminApi, authApi, profileApi } from './services/profileApi'
 import './App.css'
 
 const emptyForm = {
@@ -8,6 +8,10 @@ const emptyForm = {
   phone: '',
   blood_group: '',
   address: '',
+  location: '',
+  gender: '',
+  nid_number: '',
+  nid_document_reference: '',
   date_of_birth: '',
   last_donation_date: '',
   is_available: true,
@@ -31,6 +35,10 @@ function profileToForm(profile) {
     phone: profile.phone || '',
     blood_group: profile.blood_group || '',
     address: profile.address || '',
+    location: profile.location || '',
+    gender: profile.gender || '',
+    nid_number: profile.nid_number || '',
+    nid_document_reference: profile.nid_document_reference || '',
     date_of_birth: profile.date_of_birth || '',
     last_donation_date: profile.last_donation_date || '',
     is_available: Boolean(profile.is_available),
@@ -45,6 +53,17 @@ function App() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [authMode, setAuthMode] = useState('login')
+  const [authForm, setAuthForm] = useState({
+    username: '',
+    email: '',
+    password: '',
+    confirm_password: '',
+  })
+  const [user, setUser] = useState(null)
+  const [pendingProfiles, setPendingProfiles] = useState([])
+  const [reviewReason, setReviewReason] = useState('')
+  const [isAuthReady, setIsAuthReady] = useState(false)
 
   const loadProfiles = useCallback(async (preferredId = null) => {
     setLoading(true)
@@ -74,9 +93,47 @@ function App() {
     }
   }, [])
 
+  const loadPendingProfiles = useCallback(async () => {
+    try {
+      const result = await adminApi.getPending()
+      setPendingProfiles(result.data || [])
+    } catch (requestError) {
+      setError(requestError.message)
+    }
+  }, [])
+
   useEffect(() => {
-    loadProfiles()
-  }, [loadProfiles])
+    const token = localStorage.getItem('authToken')
+
+    if (!token) {
+      setIsAuthReady(true)
+      return
+    }
+
+    async function bootstrapAuth() {
+      try {
+        const result = await authApi.me()
+        setUser(result.data)
+      } catch {
+        localStorage.removeItem('authToken')
+        setUser(null)
+      } finally {
+        setIsAuthReady(true)
+      }
+    }
+
+    bootstrapAuth()
+  }, [])
+
+  useEffect(() => {
+    if (isAuthReady && user) {
+      loadProfiles()
+
+      if (user.role === 'admin') {
+        loadPendingProfiles()
+      }
+    }
+  }, [isAuthReady, user, loadProfiles, loadPendingProfiles])
 
   function handleChange(event) {
     const { name, value, type, checked } = event.target
@@ -101,6 +158,48 @@ function App() {
     setError('')
   }
 
+  async function handleAuthSubmit(event) {
+    event.preventDefault()
+    setMessage('')
+    setError('')
+
+    if (authMode === 'signup' && authForm.password !== authForm.confirm_password) {
+      setError('Passwords do not match.')
+      return
+    }
+
+    try {
+      const result = authMode === 'signup'
+        ? await authApi.signup(authForm)
+        : await authApi.login({ email: authForm.email, password: authForm.password })
+
+      localStorage.setItem('authToken', result.token)
+      setUser(result.data)
+      setMessage(result.message)
+    } catch (requestError) {
+      setError(requestError.message)
+    }
+  }
+
+  function handleAuthChange(event) {
+    const { name, value } = event.target
+    setAuthForm((currentForm) => ({ ...currentForm, [name]: value }))
+  }
+
+  async function handleLogout() {
+    try {
+      await authApi.logout()
+    } catch {
+      // ignore logout errors and clear local auth state
+    }
+
+    localStorage.removeItem('authToken')
+    setUser(null)
+    setPendingProfiles([])
+    setMessage('Logged out successfully')
+    window.location.href = '/'
+  }
+
   async function handleSubmit(event) {
     event.preventDefault()
     setSaving(true)
@@ -109,12 +208,16 @@ function App() {
 
     const payload = {
       ...form,
+      location: form.location || null,
+      gender: form.gender || null,
+      nid_number: form.nid_number || null,
+      nid_document_reference: form.nid_document_reference || null,
       date_of_birth: form.date_of_birth || null,
       last_donation_date: form.last_donation_date || null,
     }
 
     try {
-      const result = selectedProfileId
+      const result = isAdmin && selectedProfileId
         ? await profileApi.update(selectedProfileId, payload)
         : await profileApi.create(payload)
 
@@ -122,6 +225,24 @@ function App() {
 
       const savedProfileId = result.data.id
       await loadProfiles(savedProfileId)
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleReview(profileId, action) {
+    setSaving(true)
+    setMessage('')
+    setError('')
+
+    try {
+      const result = await adminApi.reviewProfile(profileId, action, reviewReason)
+      setMessage(result.message)
+      await loadProfiles()
+      await loadPendingProfiles()
+      setReviewReason('')
     } catch (requestError) {
       setError(requestError.message)
     } finally {
@@ -157,6 +278,9 @@ function App() {
     }
   }
 
+  const isAdmin = user?.role === 'admin'
+  const selectedProfile = profiles.find((profile) => profile.id === selectedProfileId) || null
+
   const availableDonors = profiles.filter(
     (profile) => profile.is_available,
   ).length
@@ -180,7 +304,85 @@ function App() {
       </header>
 
       <main className="page">
-        <section className="summary-grid">
+        {!isAuthReady ? (
+          <p className="empty-state">Loading authentication...</p>
+        ) : !user ? (
+          <section className="auth-card">
+            <div className="auth-header">
+              <h2>{authMode === 'signup' ? 'Create your account' : 'Log in to continue'}</h2>
+              <p>Users can add profiles. Admins can manage all profiles.</p>
+            </div>
+
+            <form className="profile-form" onSubmit={handleAuthSubmit}>
+              {authMode === 'signup' && (
+                <label className="field">
+                  <span>Username</span>
+                  <input
+                    type="text"
+                    name="username"
+                    value={authForm.username}
+                    onChange={handleAuthChange}
+                    required
+                  />
+                </label>
+              )}
+
+              <label className="field">
+                <span>Email</span>
+                <input
+                  type="email"
+                  name="email"
+                  value={authForm.email}
+                  onChange={handleAuthChange}
+                  required
+                />
+              </label>
+
+              <label className="field">
+                <span>Password</span>
+                <input
+                  type="password"
+                  name="password"
+                  value={authForm.password}
+                  onChange={handleAuthChange}
+                  required
+                />
+              </label>
+
+              {authMode === 'signup' && (
+                <label className="field">
+                  <span>Confirm Password</span>
+                  <input
+                    type="password"
+                    name="confirm_password"
+                    value={authForm.confirm_password}
+                    onChange={handleAuthChange}
+                    required
+                  />
+                </label>
+              )}
+
+              <div className="form-actions">
+                <button type="submit" className="save-button">
+                  {authMode === 'signup' ? 'Sign up' : 'Log in'}
+                </button>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => {
+                    setAuthMode(authMode === 'signup' ? 'login' : 'signup')
+                    setError('')
+                    setMessage('')
+                  }}
+                >
+                  {authMode === 'signup' ? 'Already have an account?' : 'Create account'}
+                </button>
+              </div>
+            </form>
+          </section>
+        ) : (
+          <>
+            <section className="summary-grid">
           <article className="summary-card">
             <span>Total Profiles</span>
             <strong>{profiles.length}</strong>
@@ -197,21 +399,30 @@ function App() {
           </article>
         </section>
 
-        <section className="workspace">
-          <aside className="profile-panel">
+            <section className="workspace">
+              <aside className="profile-panel">
             <div className="panel-heading">
               <div>
                 <h2>Donor Profiles</h2>
                 <p>Select a donor to edit</p>
               </div>
 
-              <button
-                type="button"
-                className="new-button"
-                onClick={createNewProfile}
-              >
-                + New
-              </button>
+              <div className="panel-actions">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={handleLogout}
+                >
+                  Logout
+                </button>
+                <button
+                  type="button"
+                  className="new-button"
+                  onClick={createNewProfile}
+                >
+                  + New
+                </button>
+              </div>
             </div>
 
             <div className="profile-list">
@@ -248,6 +459,10 @@ function App() {
                       </small>
                     </span>
 
+                    <span className={`verification-badge ${String(profile.verification_status || 'pending').toLowerCase()}`}>
+                      {profile.verification_status || 'PENDING'}
+                    </span>
+
                     <span
                       className={`availability-dot ${
                         profile.is_available
@@ -263,9 +478,9 @@ function App() {
                   </button>
                 ))}
             </div>
-          </aside>
+              </aside>
 
-          <section className="editor-panel">
+              <section className="editor-panel">
             <div className="editor-heading">
               <div>
                 <p className="eyebrow">
@@ -281,11 +496,18 @@ function App() {
                 </h2>
 
                 <p>
-                  Update personal information and donation availability.
+                  {isAdmin
+                    ? 'Admin can manage all profiles.'
+                    : 'Users can add new profiles only.'}
                 </p>
+                {selectedProfile && (
+                  <p className="verification-line">
+                    Verification status: {selectedProfile.verification_status || 'PENDING'}
+                  </p>
+                )}
               </div>
 
-              {selectedProfileId && (
+              {selectedProfileId && isAdmin && (
                 <button
                   type="button"
                   className="delete-button"
@@ -299,6 +521,58 @@ function App() {
 
             {message && (
               <div className="alert success-alert">{message}</div>
+            )}
+
+            {isAdmin && (
+              <section className="review-panel">
+                <div className="panel-heading">
+                  <div>
+                    <h3>Pending verification requests</h3>
+                    <p>Review donor submissions before they become visible to others.</p>
+                  </div>
+                </div>
+
+                {pendingProfiles.length === 0 ? (
+                  <p className="empty-state">No pending requests right now.</p>
+                ) : (
+                  pendingProfiles.map((profile) => (
+                    <div className="review-card" key={profile.id}>
+                      <div className="review-card-header">
+                        <strong>{profile.full_name}</strong>
+                        <span className="verification-badge pending">{profile.verification_status || 'PENDING'}</span>
+                      </div>
+                      <p>{profile.email}</p>
+                      <label className="field review-field">
+                        <span>Rejection reason</span>
+                        <textarea
+                          value={reviewReason}
+                          onChange={(event) => setReviewReason(event.target.value)}
+                          rows="2"
+                          placeholder="Optional note for rejection"
+                        />
+                      </label>
+                      <div className="review-actions">
+                        <button
+                          type="button"
+                          className="secondary-button"
+                          onClick={() => handleReview(profile.id, 'reject')}
+                          disabled={saving}
+                        >
+                          Reject
+                        </button>
+                        <button
+                          type="button"
+                          className="save-button"
+                          onClick={() => handleReview(profile.id, 'approve')}
+                          disabled={saving}
+                        >
+                          Approve
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </section>
             )}
 
             {error && (
@@ -381,6 +655,50 @@ function App() {
                   />
                 </label>
 
+                <label className="field">
+                  <span>Location</span>
+                  <input
+                    type="text"
+                    name="location"
+                    value={form.location}
+                    onChange={handleChange}
+                    placeholder="General location"
+                  />
+                </label>
+
+                <label className="field">
+                  <span>Gender</span>
+                  <input
+                    type="text"
+                    name="gender"
+                    value={form.gender}
+                    onChange={handleChange}
+                    placeholder="Gender"
+                  />
+                </label>
+
+                <label className="field">
+                  <span>NID Number</span>
+                  <input
+                    type="text"
+                    name="nid_number"
+                    value={form.nid_number}
+                    onChange={handleChange}
+                    placeholder="Sensitive identity number"
+                  />
+                </label>
+
+                <label className="field">
+                  <span>NID Document Ref.</span>
+                  <input
+                    type="text"
+                    name="nid_document_reference"
+                    value={form.nid_document_reference}
+                    onChange={handleChange}
+                    placeholder="Internal reference only"
+                  />
+                </label>
+
                 <label className="field full-width">
                   <span>Address</span>
                   <textarea
@@ -433,8 +751,10 @@ function App() {
                 </button>
               </div>
             </form>
-          </section>
-        </section>
+              </section>
+            </section>
+          </>
+        )}
       </main>
     </div>
   )

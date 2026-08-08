@@ -1,6 +1,6 @@
-const API_URL = 'http://127.0.0.1:8000/api/profiles'
-const AUTH_URL = 'http://127.0.0.1:8000/api/auth'
-const ADMIN_URL = 'http://127.0.0.1:8000/api/admin'
+const API_URL = 'http://127.0.0.1:5000/api/profiles'
+const AUTH_URL = 'http://127.0.0.1:5000/api/auth'
+const ADMIN_URL = 'http://127.0.0.1:5000/api/admin'
 
 async function request(url, options = {}) {
   const token = localStorage.getItem('authToken')

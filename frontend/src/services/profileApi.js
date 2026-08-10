@@ -4,6 +4,7 @@ const ADMIN_URL = 'http://127.0.0.1:5000/api/admin'
 
 async function request(url, options = {}) {
   const token = localStorage.getItem('authToken')
+
   const headers = {
     ...(options.headers || {}),
   }
@@ -16,6 +17,7 @@ async function request(url, options = {}) {
     ...options,
     headers,
   })
+
   const result = await response.json()
 
   if (!response.ok) {

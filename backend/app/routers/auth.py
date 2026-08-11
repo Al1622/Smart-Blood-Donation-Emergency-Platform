@@ -57,13 +57,15 @@ def signup(payload: dict, db: Session = Depends(get_db)):
 
 @router.post("/login")
 def login(payload: dict, db: Session = Depends(get_db)):
-    email = str(payload.get("email", "")).strip().lower()
+    identifier = str(payload.get("email") or payload.get("username") or "").strip().lower()
     password = str(payload.get("password", ""))
 
-    if not email or not password:
-        raise HTTPException(status_code=400, detail="Email and password are required")
+    if not identifier or not password:
+        raise HTTPException(status_code=400, detail="Username/Email and password are required")
 
-    user = db.query(User).filter(User.email == email).first()
+    user = db.query(User).filter(
+        (User.email == identifier) | (User.username == identifier)
+    ).first()
 
     if user is None:
         raise HTTPException(status_code=401, detail="Invalid credentials")

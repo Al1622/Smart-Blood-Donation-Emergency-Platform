@@ -1519,3 +1519,758 @@ button:disabled {
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* =========================================================
+   LOADING SCREEN
+   ========================================================= */
+
+.loading-screen {
+  min-height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 16px;
+
+  color: #64748b;
+
+  font-size: 15px;
+}
+
+.loading-screen .brand-icon {
+  width: 64px;
+  height: 64px;
+
+  font-size: 30px;
+
+  border-radius: 20px;
+}
+
+
+/* =========================================================
+   TOPBAR NAV (Phase 2)
+   ========================================================= */
+
+.topbar-nav {
+  display: flex;
+
+  align-items: center;
+
+  gap: 4px;
+}
+
+.nav-btn {
+  border: 0;
+
+  background: transparent;
+
+  color: #64748b;
+
+  padding: 8px 14px;
+
+  border-radius: 10px;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.18s,
+    color 0.18s;
+}
+
+.nav-btn:hover {
+  background: #f1f5f9;
+  color: #172033;
+}
+
+.nav-btn-active {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.user-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  padding: 7px 13px;
+
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.role-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #94a3b8;
+}
+
+.role-dot.admin {
+  background: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+}
+
+.admin-badge {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #dc2626;
+  font-weight: 700;
+  font-size: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.link-btn:hover {
+  color: #b91c1c;
+}
+
+
+/* =========================================================
+   PAGE SECTION
+   ========================================================= */
+
+.page-section {
+  animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.page-section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.page-section-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: #172033;
+}
+
+.page-section-subtitle {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+
+/* =========================================================
+   SEARCH BAR ROW
+   ========================================================= */
+
+.search-bar-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.search-input-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 13px 10px 36px;
+  border: 1px solid #d9dee8;
+  border-radius: 11px;
+  font: inherit;
+  font-size: 14px;
+  color: #172033;
+  background: white;
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.search-input:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.08);
+}
+
+.filter-select {
+  min-height: 42px;
+  padding: 10px 13px;
+  border: 1px solid #d9dee8;
+  border-radius: 11px;
+  font: inherit;
+  font-size: 14px;
+  color: #172033;
+  background: white;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.18s;
+}
+
+.filter-select:focus {
+  border-color: #ef4444;
+}
+
+.filter-count {
+  margin-left: 4px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   DONOR CARD GRID
+   ========================================================= */
+
+.donor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 18px;
+}
+
+.donor-card {
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid #e6eaf0;
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.donor-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.1);
+  border-color: #fecaca;
+}
+
+.donor-card-skeleton {
+  min-height: 150px;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.donor-card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.donor-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.donor-avatar-wrap .availability-dot {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 11px;
+  height: 11px;
+  border: 2px solid white;
+}
+
+.donor-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.donor-name {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: #172033;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+
+.blood-group-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.donor-card-body {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 12px;
+}
+
+.donor-info-row {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.donor-card-footer {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.donor-contact {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+
+/* =========================================================
+   VERIFICATION BANNER
+   ========================================================= */
+
+.verification-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+
+  padding: 16px 20px;
+
+  border-radius: 14px;
+  border: 1px solid;
+
+  margin-bottom: 22px;
+}
+
+.verification-banner p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.verification-banner strong {
+  font-size: 14px;
+}
+
+.verification-banner.pending {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+.verification-banner.approved {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #166534;
+}
+
+.verification-banner.rejected {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+.verification-banner.suspended {
+  background: #f5f3ff;
+  border-color: #ddd6fe;
+  color: #6d28d9;
+}
+
+.vb-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+
+/* =========================================================
+   PROFILE EDITOR CARD
+   ========================================================= */
+
+.profile-editor-card {
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid #e6eaf0;
+  border-radius: 20px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+}
+
+
+/* =========================================================
+   EMERGENCY PAGE
+   ========================================================= */
+
+.emergency-form-card {
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid #fecaca;
+  border-radius: 18px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 6px 24px rgba(220, 38, 38, 0.08);
+  animation: fadeIn 0.2s ease;
+}
+
+.emergency-form-title {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 800;
+  color: #172033;
+}
+
+.emergency-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 18px;
+  margin-top: 4px;
+}
+
+.emergency-card {
+  background: white;
+  border: 1px solid #e6eaf0;
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.emergency-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.1);
+}
+
+.emergency-card.urgency-card-high {
+  border-left: 4px solid #ef4444;
+}
+
+.emergency-card.urgency-card-medium {
+  border-left: 4px solid #f59e0b;
+}
+
+.emergency-card.urgency-card-low {
+  border-left: 4px solid #22c55e;
+}
+
+.emergency-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.emergency-blood-group {
+  font-size: 26px;
+  font-weight: 900;
+  color: #b91c1c;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.emergency-time {
+  margin-left: auto;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.emergency-card-body {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 12px;
+}
+
+.emergency-location {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #172033;
+}
+
+.emergency-contact {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #dc2626;
+}
+
+.emergency-description {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.emergency-card-footer {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.urgency-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.urgency-badge.urgency-high {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.urgency-badge.urgency-medium {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.urgency-badge.urgency-low {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+
+/* =========================================================
+   ADMIN DASHBOARD
+   ========================================================= */
+
+.admin-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+
+  background: #f8fafc;
+  border: 1px solid #e6eaf0;
+  border-radius: 14px;
+  padding: 6px;
+}
+
+.admin-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  padding: 9px 16px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #64748b;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+
+.admin-tab-btn:hover {
+  background: white;
+  color: #172033;
+}
+
+.admin-tab-btn.active {
+  background: white;
+  color: #dc2626;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background: #dc2626;
+  color: white;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.admin-tab-content {
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid #e6eaf0;
+  border-radius: 18px;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+  overflow: hidden;
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.admin-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  background: #f8fafc;
+  border-bottom: 1px solid #edf0f4;
+  white-space: nowrap;
+}
+
+.admin-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.admin-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.admin-table tr:hover td {
+  background: #fafbfc;
+}
+
+.row-inactive td {
+  opacity: 0.6;
+}
+
+.role-pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.role-pill.admin {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.status-active {
+  color: #166534;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.status-inactive {
+  color: #991b1b;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.audit-action {
+  background: #f1f5f9;
+  color: #334155;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.review-list {
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.stat-icon {
+  display: block;
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+
+/* Summary-grid: 6-column when there are 6 stats */
+.summary-grid.admin-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 960px) {
+  .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .topbar-nav {
+    display: none;
+  }
+
+  .donor-grid,
+  .emergency-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .search-bar-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

@@ -156,7 +156,8 @@ def create_profile(payload: ProfileCreate, db: Session = Depends(get_db), curren
         date_of_birth=parse_date(data.get("date_of_birth")),
         last_donation_date=parse_date(data.get("last_donation_date")),
         is_available=data.get("is_available", True),
-        verification_status="PENDING",
+        verification_status="APPROVED" if current_user.role == "admin" else "PENDING",
+        verified_by=current_user.id if current_user.role == "admin" else None,
     )
 
     try:

@@ -63,7 +63,7 @@ function App() {
   const [user, setUser] = useState(null)
   const [pendingProfiles, setPendingProfiles] = useState([])
   const [reviewReason, setReviewReason] = useState('')
-  const [isAuthReady, setIsAuthReady] = useState(false)
+  const [isAuthReady, setIsAuthReady] = useState(() => !localStorage.getItem('authToken'))
 
   const loadProfiles = useCallback(async (preferredId = null) => {
     setLoading(true)
@@ -106,7 +106,6 @@ function App() {
     const token = localStorage.getItem('authToken')
 
     if (!token) {
-      setIsAuthReady(true)
       return
     }
 
@@ -127,11 +126,14 @@ function App() {
 
   useEffect(() => {
     if (isAuthReady && user) {
-      loadProfiles()
+      const timer = setTimeout(() => {
+        loadProfiles()
 
-      if (user.role === 'admin') {
-        loadPendingProfiles()
-      }
+        if (user.role === 'admin') {
+          loadPendingProfiles()
+        }
+      }, 0)
+      return () => clearTimeout(timer)
     }
   }, [isAuthReady, user, loadProfiles, loadPendingProfiles])
 
@@ -315,9 +317,10 @@ function App() {
 
             <form className="profile-form" onSubmit={handleAuthSubmit}>
               {authMode === 'signup' && (
-                <label className="field">
+                <label htmlFor="auth-username" className="field">
                   <span>Username</span>
                   <input
+                    id="auth-username"
                     type="text"
                     name="username"
                     value={authForm.username}
@@ -327,9 +330,10 @@ function App() {
                 </label>
               )}
 
-              <label className="field">
+              <label htmlFor="auth-email" className="field">
                 <span>Email</span>
                 <input
+                  id="auth-email"
                   type="email"
                   name="email"
                   value={authForm.email}
@@ -338,9 +342,10 @@ function App() {
                 />
               </label>
 
-              <label className="field">
+              <label htmlFor="auth-password" className="field">
                 <span>Password</span>
                 <input
+                  id="auth-password"
                   type="password"
                   name="password"
                   value={authForm.password}
@@ -350,9 +355,10 @@ function App() {
               </label>
 
               {authMode === 'signup' && (
-                <label className="field">
+                <label htmlFor="auth-confirm-password" className="field">
                   <span>Confirm Password</span>
                   <input
+                    id="auth-confirm-password"
                     type="password"
                     name="confirm_password"
                     value={authForm.confirm_password}
@@ -542,9 +548,10 @@ function App() {
                         <span className="verification-badge pending">{profile.verification_status || 'PENDING'}</span>
                       </div>
                       <p>{profile.email}</p>
-                      <label className="field review-field">
+                      <label htmlFor={`admin-review-reason-${profile.id}`} className="field review-field">
                         <span>Rejection reason</span>
                         <textarea
+                          id={`admin-review-reason-${profile.id}`}
                           value={reviewReason}
                           onChange={(event) => setReviewReason(event.target.value)}
                           rows="2"
@@ -581,9 +588,10 @@ function App() {
 
             <form className="profile-form" onSubmit={handleSubmit}>
               <div className="form-grid">
-                <label className="field">
+                <label htmlFor="profile-full-name" className="field">
                   <span>Full Name</span>
                   <input
+                    id="profile-full-name"
                     type="text"
                     name="full_name"
                     value={form.full_name}
@@ -593,9 +601,10 @@ function App() {
                   />
                 </label>
 
-                <label className="field">
+                <label htmlFor="profile-email" className="field">
                   <span>Email Address</span>
                   <input
+                    id="profile-email"
                     type="email"
                     name="email"
                     value={form.email}
@@ -605,9 +614,10 @@ function App() {
                   />
                 </label>
 
-                <label className="field">
+                <label htmlFor="profile-phone" className="field">
                   <span>Phone Number</span>
                   <input
+                    id="profile-phone"
                     type="tel"
                     name="phone"
                     value={form.phone}
@@ -617,9 +627,10 @@ function App() {
                   />
                 </label>
 
-                <label className="field">
+                <label htmlFor="profile-blood-group" className="field">
                   <span>Blood Group</span>
                   <select
+                    id="profile-blood-group"
                     name="blood_group"
                     value={form.blood_group}
                     onChange={handleChange}
@@ -635,9 +646,10 @@ function App() {
                   </select>
                 </label>
 
-                <label className="field">
+                <label htmlFor="profile-date-of-birth" className="field">
                   <span>Date of Birth</span>
                   <input
+                    id="profile-date-of-birth"
                     type="date"
                     name="date_of_birth"
                     value={form.date_of_birth}
@@ -645,9 +657,10 @@ function App() {
                   />
                 </label>
 
-                <label className="field">
+                <label htmlFor="profile-last-donation-date" className="field">
                   <span>Last Donation Date</span>
                   <input
+                    id="profile-last-donation-date"
                     type="date"
                     name="last_donation_date"
                     value={form.last_donation_date}
@@ -655,9 +668,10 @@ function App() {
                   />
                 </label>
 
-                <label className="field">
+                <label htmlFor="profile-location" className="field">
                   <span>Location</span>
                   <input
+                    id="profile-location"
                     type="text"
                     name="location"
                     value={form.location}
@@ -666,9 +680,10 @@ function App() {
                   />
                 </label>
 
-                <label className="field">
+                <label htmlFor="profile-gender" className="field">
                   <span>Gender</span>
                   <input
+                    id="profile-gender"
                     type="text"
                     name="gender"
                     value={form.gender}
@@ -677,9 +692,10 @@ function App() {
                   />
                 </label>
 
-                <label className="field">
+                <label htmlFor="profile-nid-number" className="field">
                   <span>NID Number</span>
                   <input
+                    id="profile-nid-number"
                     type="text"
                     name="nid_number"
                     value={form.nid_number}
@@ -688,9 +704,10 @@ function App() {
                   />
                 </label>
 
-                <label className="field">
+                <label htmlFor="profile-nid-doc-ref" className="field">
                   <span>NID Document Ref.</span>
                   <input
+                    id="profile-nid-doc-ref"
                     type="text"
                     name="nid_document_reference"
                     value={form.nid_document_reference}
@@ -699,9 +716,10 @@ function App() {
                   />
                 </label>
 
-                <label className="field full-width">
+                <label htmlFor="profile-address" className="field full-width">
                   <span>Address</span>
                   <textarea
+                    id="profile-address"
                     name="address"
                     value={form.address}
                     onChange={handleChange}
@@ -712,8 +730,9 @@ function App() {
                 </label>
               </div>
 
-              <label className="availability-control">
+              <label htmlFor="profile-available" className="availability-control">
                 <input
+                  id="profile-available"
                   type="checkbox"
                   name="is_available"
                   checked={form.is_available}

@@ -41,13 +41,20 @@ async function request(url, options = {}) {
   }
 
   if (!response.ok) {
+    if (response.status === 401) {
+      localStorage.removeItem('authToken')
+    }
+
     const validationErrors = result?.errors
       ? Object.values(result.errors).join(' ')
       : ''
 
-    throw new Error(
-      validationErrors || result?.message || `Request failed with status ${response.status}.`,
-    )
+    const fallbackMessage =
+      response.status === 401
+        ? 'Your session has expired. Please log in again.'
+        : `Request failed with status ${response.status}.`
+
+    throw new Error(validationErrors || result?.message || fallbackMessage)
   }
 
   return result
@@ -82,6 +89,10 @@ export const authApi = {
 export const profileApi = {
   getAll() {
     return request(API_URL)
+  },
+
+  getMine() {
+    return request(`${API_URL}/me`)
   },
 
   getOne(profileId) {

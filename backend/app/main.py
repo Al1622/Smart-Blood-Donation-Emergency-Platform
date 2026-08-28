@@ -62,11 +62,15 @@ app.include_router(admin_router)
 app.include_router(emergency_router)
 
 
+from app.database import create_tables, DATABASE_URL
+
+
 @app.get("/api/health")
 def health_check():
     return {
         "success": True,
         "message": "Backend server is running.",
+        "database": "connected" if DATABASE_URL else "ephemeral_sqlite",
     }
 
 

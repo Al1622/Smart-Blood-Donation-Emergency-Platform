@@ -12,3 +12,6 @@ venv313
 .env.development.local
 .env.test.local
 .env.production.local
+
+.vercel
+.env*

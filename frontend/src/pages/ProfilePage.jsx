@@ -18,22 +18,62 @@ const emptyForm = {
 
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 
-function profileToForm(profile) {
-  return {
-    full_name: profile.full_name || '',
-    email: profile.email || '',
-    phone: profile.phone || '',
-    blood_group: profile.blood_group || '',
-    address: profile.address || '',
-    location: profile.location || '',
-    gender: profile.gender || '',
-    nid_number: profile.nid_number || '',
-    nid_document_reference: profile.nid_document_reference || '',
-    date_of_birth: profile.date_of_birth || '',
-    last_donation_date: profile.last_donation_date || '',
-    is_available: Boolean(profile.is_available),
-  }
+// Fields that count towards completion (required + important optional)
+const COMPLETION_FIELDS = [
+  { key: 'full_name', label: 'Full Name' },
+  { key: 'email', label: 'Email' },
+  { key: 'phone', label: 'Phone' },
+  { key: 'blood_group', label: 'Blood Group' },
+  { key: 'address', label: 'Address' },
+  { key: 'location', label: 'Location' },
+  { key: 'gender', label: 'Gender' },
+  { key: 'date_of_birth', label: 'Date of Birth' },
+  { key: 'last_donation_date', label: 'Last Donation Date' },
+  { key: 'nid_number', label: 'NID Number' },
+]
+
+function computeCompletion(form) {
+  const filled = COMPLETION_FIELDS.filter(({ key }) => {
+    const v = form[key]
+    return v !== null && v !== undefined && String(v).trim() !== ''
+  })
+  return Math.round((filled.length / COMPLETION_FIELDS.length) * 100)
 }
+
+function getMissingFields(form) {
+  return COMPLETION_FIELDS
+    .filter(({ key }) => {
+      const v = form[key]
+      return v === null || v === undefined || String(v).trim() === ''
+    })
+    .map(({ label }) => label)
+}
+
+// ── Profile completion bar ──────────────────────────────────────────────────
+
+function ProfileCompletionBar({ form }) {
+  const pct = computeCompletion(form)
+  const missing = getMissingFields(form)
+
+  return (
+    <div className="profile-completion">
+      <div className="profile-completion-header">
+        <span className="profile-completion-label">Profile Completeness</span>
+        <span className="profile-completion-pct">{pct}%</span>
+      </div>
+      <div className="profile-completion-bar">
+        <div className="profile-completion-fill" style={{ width: `${pct}%` }} />
+      </div>
+      {missing.length > 0 && (
+        <p className="profile-completion-tip">
+          Missing: {missing.slice(0, 4).join(', ')}{missing.length > 4 ? ` +${missing.length - 4} more` : ''}
+        </p>
+      )}
+    </div>
+  )
+}
+
+// ── Verification banner ─────────────────────────────────────────────────────
 
 function VerificationBanner({ status, rejectionReason }) {
   if (!status || status === 'PENDING') {
@@ -84,6 +124,25 @@ function VerificationBanner({ status, rejectionReason }) {
   return null
 }
 
+function profileToForm(profile) {
+  return {
+    full_name: profile.full_name || '',
+    email: profile.email || '',
+    phone: profile.phone || '',
+    blood_group: profile.blood_group || '',
+    address: profile.address || '',
+    location: profile.location || '',
+    gender: profile.gender || '',
+    nid_number: profile.nid_number || '',
+    nid_document_reference: profile.nid_document_reference || '',
+    date_of_birth: profile.date_of_birth || '',
+    last_donation_date: profile.last_donation_date || '',
+    is_available: Boolean(profile.is_available),
+  }
+}
+
+// ── Main page ───────────────────────────────────────────────────────────────
+
 export default function ProfilePage({ user }) {
   const [profile, setProfile] = useState(null)
   const [form, setForm] = useState(emptyForm)
@@ -97,9 +156,8 @@ export default function ProfilePage({ user }) {
     setLoading(true)
     setError('')
     try {
-      const result = await profileApi.getAll()
-      const all = result.data || []
-      const mine = all.find((p) => p.user_id === user.id)
+      const result = await profileApi.getMine()
+      const mine = result.data
       if (mine) {
         setProfile(mine)
         setForm(profileToForm(mine))
@@ -112,7 +170,7 @@ export default function ProfilePage({ user }) {
     } finally {
       setLoading(false)
     }
-  }, [user.id])
+  }, [])
 
   useEffect(() => { load() }, [load])
 
@@ -169,6 +227,9 @@ export default function ProfilePage({ user }) {
           </p>
         </div>
       </div>
+
+      {/* Profile completion bar */}
+      <ProfileCompletionBar form={form} />
 
       {profile && (
         <VerificationBanner

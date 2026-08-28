@@ -12,10 +12,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 if DATABASE_URL:
-    # psycopg2 requires "postgresql://" not "postgres://" (Neon may return the latter)
+    # psycopg2 requires "postgresql://" not "postgres://" (Neon/Supabase may return the latter)
     if DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
-    engine = create_engine(DATABASE_URL)
+    engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_recycle=300)
 else:
     # Local SQLite fallback
     if os.environ.get("VERCEL"):
@@ -23,7 +23,7 @@ else:
     else:
         DATABASE_PATH = BASE_DIR / "smart_blood.db"
     sqlite_url = f"sqlite:///{DATABASE_PATH.as_posix()}"
-    engine = create_engine(sqlite_url, connect_args={"check_same_thread": False})
+    engine = create_engine(sqlite_url, connect_args={"check_same_thread": False}, pool_pre_ping=True)
 
 SessionLocal = sessionmaker(
     autocommit=False,

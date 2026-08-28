@@ -187,6 +187,20 @@ def create_profile(payload: ProfileCreate, db: Session = Depends(get_db), curren
     )
 
 
+@router.get("/me")
+def get_my_profile(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    profile = db.query(Profile).filter(Profile.user_id == current_user.id).first()
+    if profile is None:
+        return {
+            "success": True,
+            "data": None,
+        }
+    return {
+        "success": True,
+        "data": profile.to_dict(),
+    }
+
+
 @router.get("/{profile_id}")
 def get_profile(profile_id: int, db: Session = Depends(get_db), current_user: User | None = Depends(get_optional_current_user)):
     profile = db.get(Profile, profile_id)

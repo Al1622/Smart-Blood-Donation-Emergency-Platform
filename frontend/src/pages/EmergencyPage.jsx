@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { emergencyApi } from '../services/profileApi'
 
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 const URGENCY_LABELS = { HIGH: '🔴 High', MEDIUM: '🟡 Medium', LOW: '🟢 Low' }
+const REFRESH_INTERVAL = 30 // seconds
 
 const emptyForm = { blood_group: '', location: '', contact: '', description: '', urgency: 'HIGH' }
 
@@ -32,9 +33,12 @@ export default function EmergencyPage({ user }) {
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [bloodGroupFilter, setBloodGroupFilter] = useState('')
+  const [countdown, setCountdown] = useState(REFRESH_INTERVAL)
 
-  const load = useCallback(async () => {
-    setLoading(true)
+  const countdownRef = useRef(null)
+
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true)
     setError('')
     try {
       const result = await emergencyApi.getAll()
@@ -42,11 +46,29 @@ export default function EmergencyPage({ user }) {
     } catch (err) {
       setError(err.message)
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  // Auto-refresh every 30 seconds with countdown
+  useEffect(() => {
+    setCountdown(REFRESH_INTERVAL)
+
+    const tick = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) {
+          load(true)
+          return REFRESH_INTERVAL
+        }
+        return c - 1
+      })
+    }, 1000)
+
+    countdownRef.current = tick
+    return () => clearInterval(tick)
+  }, [load])
 
   function handleChange(e) {
     const { name, value } = e.target
@@ -64,6 +86,7 @@ export default function EmergencyPage({ user }) {
       setForm(emptyForm)
       setShowForm(false)
       await load()
+      setCountdown(REFRESH_INTERVAL)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -95,13 +118,20 @@ export default function EmergencyPage({ user }) {
             Active requests for urgent blood donation. Contact donors directly.
           </p>
         </div>
-        <button
-          type="button"
-          className={showForm ? 'secondary-button' : 'save-button'}
-          onClick={() => { setShowForm((v) => !v); setError(''); setMessage('') }}
-        >
-          {showForm ? '✕ Cancel' : '+ New Request'}
-        </button>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Refresh indicator */}
+          <div className="refresh-indicator">
+            <span className="refresh-dot" />
+            Auto-refresh in {countdown}s
+          </div>
+          <button
+            type="button"
+            className={showForm ? 'secondary-button' : 'save-button'}
+            onClick={() => { setShowForm((v) => !v); setError(''); setMessage('') }}
+          >
+            {showForm ? '✕ Cancel' : '+ New Request'}
+          </button>
+        </div>
       </div>
 
       {/* New Request Form */}
@@ -187,6 +217,10 @@ export default function EmergencyPage({ user }) {
               <div className="emergency-card-top">
                 <div className="emergency-blood-group">{req.blood_group}</div>
                 <UrgencyBadge urgency={req.urgency} />
+                {/* Pulse dot for HIGH urgency */}
+                {(req.urgency === 'HIGH' || !req.urgency) && (
+                  <span className="urgency-pulse-dot" title="Critical — immediate response needed" />
+                )}
                 <span className="emergency-time">{timeAgo(req.created_at)}</span>
               </div>
 

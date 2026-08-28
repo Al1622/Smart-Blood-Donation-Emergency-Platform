@@ -53,25 +53,24 @@ export default function App() {
 
   return (
     <div className="app">
-      <Navbar
-        user={user}
-        activePage={activePage}
-        onNavigate={navigate}
-        onLogout={handleLogout}
-      />
-
-      <main className="page">
-        {!user ? (
-          <AuthPage onLogin={handleLogin} />
-        ) : (
-          <>
+      {!user ? (
+        <AuthPage onLogin={handleLogin} />
+      ) : (
+        <>
+          <Navbar
+            user={user}
+            activePage={activePage}
+            onNavigate={navigate}
+            onLogout={handleLogout}
+          />
+          <main className="page">
             {activePage === 'directory' && <DonorDirectoryPage user={user} />}
             {activePage === 'profile' && <ProfilePage user={user} />}
             {activePage === 'emergency' && <EmergencyPage user={user} />}
             {activePage === 'admin' && user.role === 'admin' && <AdminPage user={user} />}
-          </>
-        )}
-      </main>
+          </main>
+        </>
+      )}
     </div>
   )
 }
